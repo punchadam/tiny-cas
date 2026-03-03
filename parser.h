@@ -73,36 +73,39 @@ side can consume.
 #include <unordered_map>
 #include <unordered_set>
 
-namespace Parser {
-    bool parse(const std::vector<Token>& tokens, AST& outAST);
+class Parser {
+    public:
+        bool parse(const std::vector<Token>& tokens, AST& outAST);
+        
+        bool doubleToRational(const double& input, i64& outNumerator, i64& outDenominator);
 
-    // parser state
-    const std::vector<Token>* _tokens = nullptr;
-    AST* _ast = nullptr;
-    size_t _pos = 0;
+    private:
+        // object state
+        const std::vector<Token>* _tokens = nullptr;
+        AST* _ast = nullptr;
+        size_t _pos = 0;
 
-    // returns a reference to the token at pos
-    const Token& peek();
-    // returns a reference to the current token, then moves forward
-    const Token& advance();
-    // asserts the current token matches, then advances past it
-    const Token& expect(const TokenType& type);
+        // returns a reference to the token at pos
+        const Token& peek() const;
+        // returns a reference to the current token, then moves forward
+        const Token& advance();
+        // asserts the current token matches, then advances past it
+        const Token& expect(const TokenType& type);
 
-    NodeID parseExpression(const u8& minBP);
+        NodeID parseExpression(const u8& minBP);
 
-    NodeID parsePrefix();
-    NodeID parseNumber();               // rational or real
-    NodeID parseCommand();              // \sqrt{}, \pi
-    NodeID parseBraceGroup();           // {...}
-    NodeID parseLeftRight();            // \left(expr \right)
-    NodeID parseFraction();             // \frac{n}{d}
-    //NodeID parseFunctionArg();          // \sin{x}, \sin x, or \sin(x + 1)
-    NodeID parseSingleArgFunction();    // sin(), ln()
-    NodeID parseOperatorName();         // \operatorname{name}(args...)
-    std::vector<NodeID> parseArgList(); // \max{arg1, arg2, arg3, etc}
-    
-    bool canImplicitMultiply();
-    bool doubleToRational(const double& input, i64& outNumerator, i64& outDenominator);
+        NodeID parsePrefix();
+        NodeID parseNumber();               // rational or real
+        NodeID parseCommand();              // \sqrt{}, \pi
+        NodeID parseBraceGroup();           // {...}
+        NodeID parseLeftRight();            // \left(expr \right)
+        NodeID parseFraction();             // \frac{n}{d}
+        //NodeID parseFunctionArg();          // \sin{x}, \sin x, or \sin(x + 1)
+        NodeID parseSingleArgFunction();    // sin(), ln()
+        NodeID parseOperatorName();         // \operatorname{name}(args...)
+        std::vector<NodeID> parseArgList(); // \max{arg1, arg2, arg3, etc}
+        
+        bool canImplicitMultiply() const;
 };
 
 struct InfixInfo {

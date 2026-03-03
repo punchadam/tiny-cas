@@ -12,7 +12,7 @@ bool Parser::parse(const std::vector<Token>& tokens, AST& outAST) {
 }
 
 
-const Token& Parser::peek() {
+const Token& Parser::peek() const {
     return (*_tokens)[_pos];
 }
 
@@ -286,7 +286,7 @@ std::vector<NodeID> Parser::parseArgList() {
     return args;
 }
 
-bool Parser::canImplicitMultiply() {
+bool Parser::canImplicitMultiply() const {
     const Token& t = peek();
     if (t.is(TokenType::Number)) return true;
     if (t.is(TokenType::Identifier)) return t.lexeme == "!";
