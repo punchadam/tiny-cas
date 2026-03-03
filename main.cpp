@@ -4,9 +4,9 @@
 
 bool getInputString(std::string& input) {
     input.clear();
-    std::cout << "\tInput Expression:\t";
+    std::cout << "Input Expression (Type \"stop\" to stop): ";
     std::cin >> input;
-    if (input == "n" || input == "no" || input == "N" || input == "No" || input == "NO") return false;
+    if (input == "stop" || input == "STOP") return false;
     return true;
 }
 
@@ -34,7 +34,7 @@ int main(void) {
             if (!t.is(TokenType::End)) std::cout << ",";
             std::cout << " ";
         }
-        std::cout << "]\n";
+        std::cout << "]\n\n";
 
         try {
             p.parse(tokens, ast);
@@ -44,7 +44,7 @@ int main(void) {
             std::cerr << "Unexpected error " << e.what() << "\n";
         }
 
-        //std::cout << "If this isn't reached, parser is fucked\n\n";
+        std::cout << "Parsed AST:\n" << ast.toString() << "\n\n";
     }
 
     return 0;

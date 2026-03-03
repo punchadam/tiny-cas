@@ -31,7 +31,9 @@ const Token& Parser::expect(const TokenType& type) {
     if ((*_tokens)[_pos].type == type) {
         return advance();
     }
-    throw std::runtime_error("expected " + std::to_string((int)type) + ", got '" + peek().lexeme + "'");
+
+    std::string msg = "Expected " + std::to_string((int)type) + ", got \"" + peek().lexeme + "\"";
+    throw ParserError(_pos, msg);
 }
 
 NodeID Parser::parseExpression(const u8& minBP) {
@@ -185,8 +187,7 @@ NodeID Parser::parseLeftRight() {
     advance();
     expect(TokenType::LParenthesis);
     NodeID inner = parseExpression(0);
-    if (!peek().is(TokenType::Command) || peek().lexeme != "right") {
-        
+    if (!(peek().is(TokenType::Command) && peek().lexeme != "right")) {
         std::string msg = "Expected \"\\right\", got \"" + peek().lexeme + "\"";
         throw ParserError(_pos, msg);
     }

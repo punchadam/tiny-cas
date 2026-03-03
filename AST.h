@@ -66,22 +66,39 @@ enum class ConstantKind {
 struct ConstantNode {
     ConstantKind cKind;
     size_t pos = 0;
+    const std::string toString() const {
+        switch (cKind) {
+            case ConstantKind::E: return "e";
+            case ConstantKind::I: return "i";
+            case ConstantKind::PI: return "pi";
+            default: return "Unknown Constant";
+        }
+    }
 };
 
 struct RealNode {
     double value = 0.0;
     size_t pos = 0;
+    const std::string toString() const {
+        return std::to_string(value);
+    }
 };
 
 struct RationalNode {
     i64 numerator = 0;
     i64 denominator = 0;
     size_t pos = 0;
+    const std::string toString() const {
+        return std::to_string(numerator) + "/" + std::to_string(denominator);
+    }
 };
 
 struct IdentifierNode {
     std::string name;
     size_t pos = 0;
+    const std::string toString() const {
+        return name;
+    }
 };
 
 enum class BinaryOpKind {
@@ -103,6 +120,17 @@ struct BinaryOpNode {
     NodeID left = NodeID::None();
     NodeID right = NodeID::None();
     size_t pos = 0;
+    const std::string toString() const {
+        switch (bKind) {
+            case BinaryOpKind::Equals: return "=";
+            case BinaryOpKind::Add: return "+";
+            case BinaryOpKind::Subtract: return "-";
+            case BinaryOpKind::Multiply: return "*";
+            case BinaryOpKind::Divide: return "/";
+            case BinaryOpKind::Power: return "^";
+            default: return "Unknown Binary Operation";
+        }
+    }
 };
 
 enum class UnaryOpKind {
@@ -114,6 +142,14 @@ struct UnaryOpNode {
     UnaryOpKind uKind;
     NodeID inner = NodeID::None();
     size_t pos = 0;
+    const std::string toString() const {
+        switch (uKind) {
+            case UnaryOpKind::Negate: return "-";
+            case UnaryOpKind::Factorial: return "!";
+            case UnaryOpKind::Percent: return "%";
+            default: return "Unknown Unary Operation";
+        }
+    }
 };
 
 enum class FunctionKind {
@@ -121,7 +157,6 @@ enum class FunctionKind {
     Cosine,
     Tangent,
     Atan2,
-
     AbsoluteValue,
     Exponential,
     NaturalLogarithm,
@@ -134,6 +169,22 @@ struct CallNode {
     FunctionKind fKind;
     std::vector<NodeID> args;
     size_t pos = 0;
+    const std::string toString() const {
+        switch (fKind) {
+            case FunctionKind::Sine: return "sin";
+            case FunctionKind::Cosine: return "sin";
+            case FunctionKind::Tangent: return "sin";
+            case FunctionKind::Atan2: return "atan2";
+            case FunctionKind::AbsoluteValue: return "abs";
+            case FunctionKind::Exponential: return "exp";
+            case FunctionKind::NaturalLogarithm: return "ln";
+            case FunctionKind::Logarithm: return "log";
+            case FunctionKind::Hypotenuse: return "hypot";
+            case FunctionKind::Max: return "max";
+            case FunctionKind::Min: return "min";
+            default: return "Unknown Call";
+        }
+    }
 };
 
 struct ASTNode {
@@ -197,6 +248,10 @@ class AST {
         NodeID addCall(const FunctionKind& fKind, const std::vector<NodeID>& args, const size_t& pos = UnknownPos) {
             return addNode(CallNode{ fKind, args, pos });
         }
+
+        const std::string toString() const {
+            return toString(root, 0);
+        }
     
     private:
         template <class T>
@@ -205,6 +260,29 @@ class AST {
             NodeID id{ arena.size() };
             arena.emplace_back(std::move(t));
             return id;
+        }
+
+        std::string toString(NodeID id, u8 depth) const {
+            std::string indent(2*depth, ' ');
+            std::string result;
+            
+            std::visit([&](auto& node) {
+                using T = std::decay_t<decltype(node)>;
+                result += indent + node.toString() + "\n";
+                if constexpr (std::is_same_v<T, BinaryOpNode>) {
+                    result += toString(node.left, depth + 1);
+                    result += toString(node.right, depth + 1);
+                }
+                if constexpr (std::is_same_v<T, UnaryOpNode>) {
+                    result += toString(node.inner, depth + 1);
+                }
+                if constexpr (std::is_same_v<T, CallNode>) {
+                    for (const NodeID& arg : node.args) {
+                        result += toString(arg, depth + 1);
+                    }
+                }
+            }, at(id).kind);
+            return result;
         }
 };
 
