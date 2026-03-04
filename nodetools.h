@@ -5,6 +5,7 @@
 #include "Error.h"
 #include <set>
 
+#pragma region IS_TYPE_METHODS
 bool isConstant(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
@@ -57,7 +58,9 @@ bool isCall(const AST& ast, const NodeID& id) {
     if (std::holds_alternative<CallNode>(k)) return true;
     return false;
 }
+#pragma endregion IS_METHODS
 
+#pragma region GET_METHODS
 const std::optional<double> getReal(const AST& ast, const NodeID& id) {
     if (!isReal(ast, id)) return std::nullopt;
     return std::get<RealNode>(ast.at(id).kind).value;
@@ -66,6 +69,11 @@ const std::optional<double> getReal(const AST& ast, const NodeID& id) {
 std::optional<RationalNode> getRational(const AST& ast, const NodeID& id) {
     if (!isRational(ast, id)) return std::nullopt;
     return std::get<RationalNode>(ast.at(id).kind);
+}
+
+std::optional<ConstantNode> getConstant(const AST& ast, const NodeID& id) {
+    if (!isConstant(ast, id)) return std::nullopt;
+    return std::get<ConstantNode>(ast.at(id).kind);
 }
 
 std::optional<std::string> getIdentifierName(const AST& ast, const NodeID& id) {
@@ -87,11 +95,16 @@ std::optional<CallNode> getCall(const AST& ast, const NodeID& id) {
     if (!isCall(ast, id)) return std::nullopt;
     return std::get<CallNode>(ast.at(id).kind);
 }
+#pragma endregion GET_METHODS
 
+#pragma region NUMBER_METHODS
 const bool isZero(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r == 0.0;
     if (auto r = getRational(ast, id)) return r->numerator == 0;
     return false;
+}
+bool isZero(const RationalNode& r) {
+    return r.numerator == 0;
 }
 
 const bool isOne(const AST& ast, const NodeID& id) {
@@ -99,10 +112,28 @@ const bool isOne(const AST& ast, const NodeID& id) {
     if (auto r = getRational(ast, id)) return r->numerator == r->denominator;
     return false;
 }
+bool isOne(const RationalNode& r) {
+    return r.numerator == r.denominator;
+}
 
 const bool isNegativeOne(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r == -1.0;
     if (auto r = getRational(ast, id)) return -r->numerator == r->denominator;
+    return false;
+}
+bool isNegativeOne(const RationalNode& r) {
+    return -r.numerator == r.denominator;
+}
+
+const bool isPositive(const AST& ast, const NodeID& id) {
+    if (auto r = getReal(ast, id)) return *r > 0.0;
+    if (auto r = getRational(ast, id)) return (r->numerator > 0) == (r->denominator > 0);
+    return false;
+}
+
+const bool isNegative(const AST& ast, const NodeID& id) {
+    if (auto r = getReal(ast, id)) return *r < 0.0;
+    if (auto r = getRational(ast, id)) return (r->numerator > 0) != (r->denominator > 0);
     return false;
 }
 
@@ -111,7 +142,17 @@ const std::optional<double> toDouble(const AST& ast, const NodeID& id) {
     if (auto r = getRational(ast, id)) return (double)r->numerator / (double)r->denominator;
     return std::nullopt;
 }
+const std::optional<double> toDouble(const ConstantNode& c) {
+    if (c.cKind == ConstantKind::E) return 2.718281828459045;
+    if (c.cKind == ConstantKind::PI) return 3.141592653589793;
+    return std::nullopt;
+}
+double toDouble(const RationalNode& r) {
+    return (double)r.numerator / (double)r.denominator;
+}
+#pragma endregion NUMBER_METHODS
 
+#pragma region IDENTIFIER_METHODS
 bool containsIdentifier(const AST& ast, const NodeID& id, const std::string& name) {
     if (id.isNone()) return false;
 
@@ -149,6 +190,43 @@ std::set<std::string> collectIdentifiers(const AST& ast, const NodeID& id) {
     }
     return {};
 }
+#pragma endregion IDENTIFIER_METHODS
+
+#pragma region BUILDERS
+NodeID makeSqrt(AST& ast, const NodeID& inner) {
+    return ast.addBinaryOp(BinaryOpKind::Power, inner, ast.addRational(1, 2));
+}
+
+NodeID makeNeg(AST& ast, const NodeID& inner) {
+    return ast.addUnaryOp(UnaryOpKind::Negate, inner);
+}
+
+NodeID makeReciprocal(AST& ast, const NodeID& inner) {
+    return ast.addBinaryOp(BinaryOpKind::Divide, ast.addRational(1, 1), inner);
+}
+
+NodeID makePiMultiple(AST& ast, i64 num, i64 den) {
+    if (num == 0) return ast.addRational(0, 1);
+    NodeID pi = ast.addConstant(ConstantKind::PI);
+    if (num == 1 && den == 1) return pi;
+    return ast.addBinaryOp(BinaryOpKind::Multiply, ast.addRational(num, den), pi);
+}
+
+NodeID makeProduct(AST& ast, const NodeID& a, const NodeID& b) {
+    return ast.addBinaryOp(BinaryOpKind::Multiply, a, b);
+}
+
+NodeID makeSum(AST& ast, const NodeID& a, const NodeID& b) {
+    return ast.addBinaryOp(BinaryOpKind::Add, a, b);
+}
+
+NodeID makeQuotient(AST& ast, const NodeID& a, const NodeID& b) {
+    return ast.addBinaryOp(BinaryOpKind::Divide, a, b);
+}
+
+NodeID makePower(AST& ast, const NodeID& base, const NodeID& exp) {
+    return ast.addBinaryOp(BinaryOpKind::Power, base, exp);
+}
 
 NodeID cloneSubtree(const AST& in, const NodeID& id, AST& out) {
     if (id.isNone()) return NodeID::None();
@@ -177,5 +255,111 @@ NodeID cloneSubtree(const AST& in, const NodeID& id, AST& out) {
         }
     }, in.at(id).kind);
 }
+#pragma endregion BUILDERS
+
+#pragma region COEFFICIENT_EXTRACTION
+
+struct CoefficientPair {
+    RationalNode coefficient;
+    NodeID remainder; // None if the expression is purely rational
+};
+
+std::optional<CoefficientPair> extractCoefficient(const AST& ast, const NodeID& id) {
+    if (isRational(ast, id)) {
+        return CoefficientPair{*getRational(ast, id), NodeID::None()};
+    }
+    if (isIdentifier(ast, id) || isConstant(ast, id)) {
+        return CoefficientPair{{1, 1}, id};
+    }
+
+    if (auto b = getBinaryOp(ast, id)) {
+        // rational * expression
+        if (b->bKind == BinaryOpKind::Multiply) {
+            if (isRational(ast, b->left)) {
+                auto inner = extractCoefficient(ast, b->right);
+                if (inner) {
+                    auto l = *getRational(ast, b->left);
+                    return CoefficientPair{
+                        {l.numerator * inner->coefficient.numerator,
+                         l.denominator * inner->coefficient.denominator},
+                        inner->remainder
+                    };
+                }
+                return CoefficientPair{*getRational(ast, b->left), b->right};
+            }
+            // expression * rational
+            if (isRational(ast, b->right)) {
+                auto inner = extractCoefficient(ast, b->left);
+                if (inner) {
+                    auto r = *getRational(ast, b->right);
+                    return CoefficientPair{
+                        {r.numerator * inner->coefficient.numerator,
+                         r.denominator * inner->coefficient.denominator},
+                        inner->remainder
+                    };
+                }
+                return CoefficientPair{*getRational(ast, b->right), b->left};
+            }
+        }
+
+        // expression / rational
+        if (b->bKind == BinaryOpKind::Divide && isRational(ast, b->right)) {
+            auto inner = extractCoefficient(ast, b->left);
+            auto r = *getRational(ast, b->right);
+            if (inner) {
+                return CoefficientPair{
+                    {inner->coefficient.numerator * r.denominator,
+                     inner->coefficient.denominator * r.numerator},
+                    inner->remainder
+                };
+            }
+            return CoefficientPair{{r.denominator, r.numerator}, b->left};
+        }
+    }
+
+    // pull out -1
+    if (auto u = getUnaryOp(ast, id)) {
+        if (u->uKind == UnaryOpKind::Negate) {
+            auto inner = extractCoefficient(ast, u->inner);
+            if (inner) {
+                return CoefficientPair{
+                    {-inner->coefficient.numerator, inner->coefficient.denominator},
+                    inner->remainder
+                };
+            }
+            return CoefficientPair{{-1, 1}, u->inner};
+        }
+    }
+
+    return std::nullopt;
+}
+
+// check if an expression is a rational multiple of a specific constant
+std::optional<RationalNode> extractConstantCoefficient(const AST& ast, const NodeID& id, ConstantKind kind) {
+    auto pair = extractCoefficient(ast, id);
+    if (!pair) return std::nullopt;
+
+    // pure zero
+    if (pair->remainder.isNone()) {
+        if (pair->coefficient.numerator == 0) return RationalNode{0, 1};
+        return std::nullopt;
+    }
+
+    if (auto c = getConstant(ast, pair->remainder)) {
+        if (c->cKind == kind) return pair->coefficient;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<RationalNode> extractPiCoefficient(const AST& ast, const NodeID& id) {
+    return extractConstantCoefficient(ast, id, ConstantKind::PI);
+}
+
+std::optional<RationalNode> extractECoefficient(const AST& ast, const NodeID& id) {
+    return extractConstantCoefficient(ast, id, ConstantKind::E);
+}
+
+#pragma endregion COEFFICIENT_EXTRACTION
 
 #endif
