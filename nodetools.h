@@ -6,53 +6,53 @@
 #include <set>
 
 #pragma region IS_TYPE_METHODS
-bool isConstant(const AST& ast, const NodeID& id) {
+inline bool isConstant(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<ConstantNode>(k)) return true;
     return false;
 }
 
-bool isReal(const AST& ast, const NodeID& id) {
+inline bool isReal(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<RealNode>(k)) return true;
     return false;
 }
 
-bool isRational(const AST& ast, const NodeID& id) {
+inline bool isRational(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<RationalNode>(k)) return true;
     return false;
 }
 
-bool isNumeric(const AST& ast, const NodeID& id) {
+inline bool isNumeric(const AST& ast, const NodeID& id) {
     return isReal(ast, id) || isRational(ast, id);
 }
 
-bool isIdentifier(const AST& ast, const NodeID& id) {
+inline bool isIdentifier(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<IdentifierNode>(k)) return true;
     return false;
 }
 
-bool isBinaryOp(const AST& ast, const NodeID& id) {
+inline bool isBinaryOp(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<BinaryOpNode>(k)) return true;
     return false;
 }
 
-bool isUnaryOp(const AST& ast, const NodeID& id) {
+inline bool isUnaryOp(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<UnaryOpNode>(k)) return true;
     return false;
 }
 
-bool isCall(const AST& ast, const NodeID& id) {
+inline bool isCall(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
     if (std::holds_alternative<CallNode>(k)) return true;
@@ -61,99 +61,99 @@ bool isCall(const AST& ast, const NodeID& id) {
 #pragma endregion IS_METHODS
 
 #pragma region GET_METHODS
-const std::optional<double> getReal(const AST& ast, const NodeID& id) {
+inline const std::optional<double> getReal(const AST& ast, const NodeID& id) {
     if (!isReal(ast, id)) return std::nullopt;
     return std::get<RealNode>(ast.at(id).kind).value;
 }
 
-std::optional<RationalNode> getRational(const AST& ast, const NodeID& id) {
+inline std::optional<RationalNode> getRational(const AST& ast, const NodeID& id) {
     if (!isRational(ast, id)) return std::nullopt;
     return std::get<RationalNode>(ast.at(id).kind);
 }
 
-std::optional<ConstantNode> getConstant(const AST& ast, const NodeID& id) {
+inline std::optional<ConstantNode> getConstant(const AST& ast, const NodeID& id) {
     if (!isConstant(ast, id)) return std::nullopt;
     return std::get<ConstantNode>(ast.at(id).kind);
 }
 
-std::optional<std::string> getIdentifierName(const AST& ast, const NodeID& id) {
+inline std::optional<std::string> getIdentifierName(const AST& ast, const NodeID& id) {
     if (!isIdentifier(ast, id)) return std::nullopt;
     return std::get<IdentifierNode>(ast.at(id).kind).name;
 }
 
-std::optional<BinaryOpNode> getBinaryOp(const AST& ast, const NodeID& id) {
+inline std::optional<BinaryOpNode> getBinaryOp(const AST& ast, const NodeID& id) {
     if (!isBinaryOp(ast, id)) return std::nullopt;
     return std::get<BinaryOpNode>(ast.at(id).kind);
 }
 
-std::optional<UnaryOpNode> getUnaryOp(const AST& ast, const NodeID& id) {
+inline std::optional<UnaryOpNode> getUnaryOp(const AST& ast, const NodeID& id) {
     if (!isUnaryOp(ast, id)) return std::nullopt;
     return std::get<UnaryOpNode>(ast.at(id).kind);
 }
 
-std::optional<CallNode> getCall(const AST& ast, const NodeID& id) {
+inline std::optional<CallNode> getCall(const AST& ast, const NodeID& id) {
     if (!isCall(ast, id)) return std::nullopt;
     return std::get<CallNode>(ast.at(id).kind);
 }
 #pragma endregion GET_METHODS
 
 #pragma region NUMBER_METHODS
-const bool isZero(const AST& ast, const NodeID& id) {
+inline const bool isZero(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r == 0.0;
     if (auto r = getRational(ast, id)) return r->numerator == 0;
     return false;
 }
-bool isZero(const RationalNode& r) {
+inline bool isZero(const RationalNode& r) {
     return r.numerator == 0;
 }
 
-const bool isOne(const AST& ast, const NodeID& id) {
+inline const bool isOne(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r == 1.0;
     if (auto r = getRational(ast, id)) return r->numerator == r->denominator;
     return false;
 }
-bool isOne(const RationalNode& r) {
+inline bool isOne(const RationalNode& r) {
     return r.numerator == r.denominator;
 }
 
-const bool isNegativeOne(const AST& ast, const NodeID& id) {
+inline const bool isNegativeOne(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r == -1.0;
     if (auto r = getRational(ast, id)) return -r->numerator == r->denominator;
     return false;
 }
-bool isNegativeOne(const RationalNode& r) {
+inline bool isNegativeOne(const RationalNode& r) {
     return -r.numerator == r.denominator;
 }
 
-const bool isPositive(const AST& ast, const NodeID& id) {
+inline const bool isPositive(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r > 0.0;
     if (auto r = getRational(ast, id)) return (r->numerator > 0) == (r->denominator > 0);
     return false;
 }
 
-const bool isNegative(const AST& ast, const NodeID& id) {
+inline const bool isNegative(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r < 0.0;
     if (auto r = getRational(ast, id)) return (r->numerator > 0) != (r->denominator > 0);
     return false;
 }
 
-const std::optional<double> toDouble(const AST& ast, const NodeID& id) {
+inline const std::optional<double> toDouble(const AST& ast, const NodeID& id) {
     if (auto r = getReal(ast, id)) return *r;
     if (auto r = getRational(ast, id)) return (double)r->numerator / (double)r->denominator;
     return std::nullopt;
 }
-const std::optional<double> toDouble(const ConstantNode& c) {
+inline const std::optional<double> toDouble(const ConstantNode& c) {
     if (c.cKind == ConstantKind::E) return 2.718281828459045;
     if (c.cKind == ConstantKind::PI) return 3.141592653589793;
     return std::nullopt;
 }
-double toDouble(const RationalNode& r) {
+inline double toDouble(const RationalNode& r) {
     return (double)r.numerator / (double)r.denominator;
 }
 #pragma endregion NUMBER_METHODS
 
 #pragma region IDENTIFIER_METHODS
-bool containsIdentifier(const AST& ast, const NodeID& id, const std::string& name) {
+inline bool containsIdentifier(const AST& ast, const NodeID& id, const std::string& name) {
     if (id.isNone()) return false;
 
     if (auto n = getIdentifierName(ast, id)) return *n == name;
@@ -168,7 +168,7 @@ bool containsIdentifier(const AST& ast, const NodeID& id, const std::string& nam
     return false;
 }
 
-std::set<std::string> collectIdentifiers(const AST& ast, const NodeID& id) {
+inline std::set<std::string> collectIdentifiers(const AST& ast, const NodeID& id) {
     if (id.isNone()) return {};
 
     if (auto n = getIdentifierName(ast, id)) return { *n };
@@ -193,42 +193,42 @@ std::set<std::string> collectIdentifiers(const AST& ast, const NodeID& id) {
 #pragma endregion IDENTIFIER_METHODS
 
 #pragma region BUILDERS
-NodeID makeSqrt(AST& ast, const NodeID& inner) {
+inline NodeID makeSqrt(AST& ast, const NodeID& inner) {
     return ast.addBinaryOp(BinaryOpKind::Power, inner, ast.addRational(1, 2));
 }
 
-NodeID makeNeg(AST& ast, const NodeID& inner) {
+inline NodeID makeNeg(AST& ast, const NodeID& inner) {
     return ast.addUnaryOp(UnaryOpKind::Negate, inner);
 }
 
-NodeID makeReciprocal(AST& ast, const NodeID& inner) {
+inline NodeID makeReciprocal(AST& ast, const NodeID& inner) {
     return ast.addBinaryOp(BinaryOpKind::Divide, ast.addRational(1, 1), inner);
 }
 
-NodeID makePiMultiple(AST& ast, i64 num, i64 den) {
+inline NodeID makePiMultiple(AST& ast, i64 num, i64 den) {
     if (num == 0) return ast.addRational(0, 1);
     NodeID pi = ast.addConstant(ConstantKind::PI);
     if (num == 1 && den == 1) return pi;
     return ast.addBinaryOp(BinaryOpKind::Multiply, ast.addRational(num, den), pi);
 }
 
-NodeID makeProduct(AST& ast, const NodeID& a, const NodeID& b) {
+inline NodeID makeProduct(AST& ast, const NodeID& a, const NodeID& b) {
     return ast.addBinaryOp(BinaryOpKind::Multiply, a, b);
 }
 
-NodeID makeSum(AST& ast, const NodeID& a, const NodeID& b) {
+inline NodeID makeSum(AST& ast, const NodeID& a, const NodeID& b) {
     return ast.addBinaryOp(BinaryOpKind::Add, a, b);
 }
 
-NodeID makeQuotient(AST& ast, const NodeID& a, const NodeID& b) {
+inline NodeID makeQuotient(AST& ast, const NodeID& a, const NodeID& b) {
     return ast.addBinaryOp(BinaryOpKind::Divide, a, b);
 }
 
-NodeID makePower(AST& ast, const NodeID& base, const NodeID& exp) {
+inline NodeID makePower(AST& ast, const NodeID& base, const NodeID& exp) {
     return ast.addBinaryOp(BinaryOpKind::Power, base, exp);
 }
 
-NodeID cloneSubtree(const AST& in, const NodeID& id, AST& out) {
+inline NodeID cloneSubtree(const AST& in, const NodeID& id, AST& out) {
     if (id.isNone()) return NodeID::None();
 
     return std::visit([&](const auto& node) -> NodeID {
@@ -264,7 +264,7 @@ struct CoefficientPair {
     NodeID remainder; // None if the expression is purely rational
 };
 
-std::optional<CoefficientPair> extractCoefficient(const AST& ast, const NodeID& id) {
+inline std::optional<CoefficientPair> extractCoefficient(const AST& ast, const NodeID& id) {
     if (isRational(ast, id)) {
         return CoefficientPair{*getRational(ast, id), NodeID::None()};
     }
@@ -335,7 +335,7 @@ std::optional<CoefficientPair> extractCoefficient(const AST& ast, const NodeID& 
 }
 
 // check if an expression is a rational multiple of a specific constant
-std::optional<RationalNode> extractConstantCoefficient(const AST& ast, const NodeID& id, ConstantKind kind) {
+inline std::optional<RationalNode> extractConstantCoefficient(const AST& ast, const NodeID& id, ConstantKind kind) {
     auto pair = extractCoefficient(ast, id);
     if (!pair) return std::nullopt;
 
@@ -352,11 +352,11 @@ std::optional<RationalNode> extractConstantCoefficient(const AST& ast, const Nod
     return std::nullopt;
 }
 
-std::optional<RationalNode> extractPiCoefficient(const AST& ast, const NodeID& id) {
+inline std::optional<RationalNode> extractPiCoefficient(const AST& ast, const NodeID& id) {
     return extractConstantCoefficient(ast, id, ConstantKind::PI);
 }
 
-std::optional<RationalNode> extractECoefficient(const AST& ast, const NodeID& id) {
+inline std::optional<RationalNode> extractECoefficient(const AST& ast, const NodeID& id) {
     return extractConstantCoefficient(ast, id, ConstantKind::E);
 }
 

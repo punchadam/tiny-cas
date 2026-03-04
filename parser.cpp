@@ -172,7 +172,7 @@ NodeID Parser::parseCommand() {
         return parseLeftRight();
     }
 
-    std::string msg = "Unknown command: \\" + cmd;
+    std::string msg = "Unknown command: " + cmd;
     throw ParserError(_pos, msg);
 }
 
@@ -188,7 +188,7 @@ NodeID Parser::parseLeftRight() {
     expect(TokenType::LParenthesis);
     NodeID inner = parseExpression(0);
     if (!(peek().is(TokenType::Command) && peek().lexeme != "right")) {
-        std::string msg = "Expected \"\\right\", got \"" + peek().lexeme + "\"";
+        std::string msg = "Expected \"right\", got \"" + peek().lexeme + "\"";
         throw ParserError(_pos, msg);
     }
     advance();

@@ -74,7 +74,7 @@ NodeID applyTrigIdentities(const AST& input, const NodeID id, AST& output);
 NodeID canonicalizeLogExp(const AST& input, const NodeID id, AST& output);
 
 // returns exact rational if possible
-std::optional<NodeID> tryFoldPower(const RationalNode& base, const RationalNode& exp, AST& output, size_t pos);
+std::optional<NodeID> tryFoldPower(const RationalNode& base, const RationalNode& exp, AST& output);
 // returns exact nth root of val if possible
 std::optional<i64> tryIntegerRoot(i64 val, i64 n);
 // tries to fold trig functions using known sin identities
@@ -82,9 +82,9 @@ std::optional<NodeID> tryFoldTrig(FunctionKind fKind, const AST& ast, const Node
 
 // normalize a rational to [0, 2] by mod 2
 static RationalNode modTwoPi(RationalNode r);
-// core sin solver
-static std::optional<NodeID> foldSinAtPiMultiple(const RationalNode& piCoeff, AST& out);
 // shift a pi coefficient (returns 1/2 - k) so cos(k * pi) = sin((1/2 - k) * pi)
 static RationalNode cosShift(const RationalNode& k);
+// core sin solver
+static std::optional<NodeID> foldSinAtPiMultiple(const RationalNode& piCoeff, AST& out);
 
 #endif

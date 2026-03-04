@@ -47,7 +47,7 @@ enum class SupportedCommands {
 };
 
 // stern brocot search for a fraction approx of a double
-bool doubleToRational(const double& input, i64& outNumerator, i64& outDenominator) {
+inline bool doubleToRational(const double& input, i64& outNumerator, i64& outDenominator) {
     // easier for sign stuff
     double value = input;
     

@@ -48,7 +48,7 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
                 
                 if (isdigit(c)) { begin(State::Number, i); buffer += static_cast<char>(c); break; }
                 if (c == '.') { begin(State::NumberFracMark, i); buffer += '.'; break; }
-                if (c == '\\') { begin(State::Command, i); buffer += '\\'; break; }
+                if (c == '\\') { begin(State::Command, i); break; }
                 
                 if (isalnum(c)) { begin(State::Identifier, i); buffer += static_cast<char>(c); break; }
                 

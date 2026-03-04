@@ -1,6 +1,7 @@
 #include "solver.h"
 
 const NodeID solve(const NodeID& root) {
+    return NodeID::None();
     NodeID current = root;
     bool changed;
     do {
