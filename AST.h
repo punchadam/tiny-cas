@@ -172,8 +172,8 @@ struct CallNode {
     const std::string toString() const {
         switch (fKind) {
             case FunctionKind::Sine: return "sin";
-            case FunctionKind::Cosine: return "sin";
-            case FunctionKind::Tangent: return "sin";
+            case FunctionKind::Cosine: return "cos";
+            case FunctionKind::Tangent: return "tan";
             case FunctionKind::Atan2: return "atan2";
             case FunctionKind::AbsoluteValue: return "abs";
             case FunctionKind::Exponential: return "exp";

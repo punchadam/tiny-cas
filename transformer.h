@@ -4,12 +4,12 @@
 #include "nodetools.h"
 
 // returns a transformed AST
-void transform(const AST& input, const NodeID& id, AST& output);
+NodeID transform(const AST& input, AST& output);
 
 // losslessly folds constant subtrees
-void foldConstants(const AST& input, const NodeID& id, AST& output);
+NodeID foldConstants(const AST& input, const NodeID& id, AST& output);
 
 // turns all subtraction into addition of negation 
-void eliminateSubtraction(const AST& input, const NodeID& id, AST& output);
+NodeID eliminateSubtraction(const AST& input, const NodeID& id, AST& output);
 
 #endif

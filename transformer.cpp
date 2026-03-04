@@ -1,13 +1,19 @@
 #include "transformer.h"
 
-void transform(const AST& input, const NodeID& id, AST& output) {
-    
+NodeID transform(const AST& input, AST& output) {
+    AST temp;
+    NodeID afterFold = foldConstants(input, input.root, temp);
+    temp.root = afterFold;
+    NodeID afterSubtractionElim = eliminateSubtraction(temp, temp.root, output);
+    output.root = afterSubtractionElim;
+    return afterSubtractionElim;
 }
 
-void foldConstants(const AST& input, const NodeID& id, AST& output) {
+NodeID foldConstants(const AST& input, const NodeID& id, AST& output) {
+    if (id.isNone()) return;
 
 }
 
-void eliminateSubtraction(const AST& input, const NodeID& id, AST& output) {
+NodeID eliminateSubtraction(const AST& input, const NodeID& id, AST& output) {
 
 }
