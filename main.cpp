@@ -12,7 +12,7 @@ bool getInputString(std::string& input) {
 }
 
 int main(void) {
-    std::cout << "Math Compiler v0.1.0\n\n";
+    std::cout << "Math Compiler v0.1.0 by Adam Punch\n\n";
     
     std::string input;
     while (getInputString(input)) {

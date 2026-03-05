@@ -32,6 +32,10 @@ inline bool isNumeric(const AST& ast, const NodeID& id) {
     return isReal(ast, id) || isRational(ast, id);
 }
 
+inline bool isLeafNode(const AST& ast, const NodeID& id) {
+    return isNumeric(ast, id) || isConstant(ast, id) || isIdentifier(ast, id);
+}
+
 inline bool isIdentifier(const AST& ast, const NodeID& id) {
     if (id.isNone()) return false;
     const ASTNode::Kind& k = ast.at(id).kind;
@@ -422,6 +426,19 @@ inline std::vector<NodeID> flattenSum(const AST& ast, const NodeID& id) {
     std::vector<NodeID> terms;
     flattenSum(ast, id, terms);
     return terms;
+}
+
+inline std::vector<NodeID> flattenProduct(const AST& ast, const NodeID& id, std::vector<NodeID> factors) {
+    if (id.isNone()) return;
+
+    if (auto b = getBinaryOp(ast, id)) {
+        if (b->bKind == BinaryOpKind::Multiply) {
+            flattenProduct(ast, b->left, factors);
+            flattenProduct(ast, b->right, factors);
+            return;
+        }
+    }
+    factors.push_back(id);
 }
 
 #pragma region ORDERING
