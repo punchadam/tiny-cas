@@ -58,6 +58,9 @@ folded by another iteration of the sequence.
 // returns a transformed AST
 NodeID transform(const AST& input, AST& output);
 
+// removes negate as a unary op and instead stores it directly or by (-1) * x
+NodeID eliminateNegate(const AST& input, const NodeID& id, AST& output);
+
 // losslessly folds constant subtrees
 NodeID foldConstants(const AST& input, const NodeID& id, AST& output);
 

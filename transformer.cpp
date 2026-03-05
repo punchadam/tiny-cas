@@ -8,15 +8,16 @@ NodeID transform(const AST& input, AST& output) {
     current.root = cloneSubtree(input, input.root, current);
 
     while (true) {
-        AST a, b, c, d, e, f, next;
+        AST a, b, c, d, e, f, g, next;
 
-        a.root = foldConstants(current, current.root, a);
-        b.root = eliminateSubtraction(a, a.root, b);
-        c.root = simplifyIdentities(b, b.root, c);
-        d.root = combineLikeTerms(c, c.root, d);
-        e.root = normalizeSign(d, d.root, e);
-        f.root = applyTrigIdentities(e, e.root, f);
-        next.root = canonicalizeLogExp(f, f.root, next);
+        a.root = eliminateNegate(current, current.root, a);
+        b.root = foldConstants(a, a.root, b);
+        c.root = eliminateSubtraction(b, b.root, c);
+        d.root = simplifyIdentities(c, c.root, d);
+        e.root = combineLikeTerms(d, d.root, e);
+        f.root = normalizeSign(e, e.root, f);
+        g.root = applyTrigIdentities(f, f.root, g);
+        next.root = canonicalizeLogExp(g, g.root, next);
 
         if (next.arena.size() == current.arena.size()) {
             current = std::move(next);
@@ -27,6 +28,36 @@ NodeID transform(const AST& input, AST& output) {
 
     output.root = cloneSubtree(current, current.root, output);
     return output.root;
+}
+
+NodeID eliminateNegate(const AST& input, const NodeID& id, AST& output) {
+    if (id.isNone()) return NodeID::None();
+
+    if (auto u = getUnaryOp(input, id)) {
+        if (u->uKind == UnaryOpKind::Negate) {
+            NodeID inner = eliminateNegate(input, u->inner, output);
+            return makeNeg(output, inner);
+        }
+        NodeID inner = eliminateNegate(input, u->inner, output);
+        return output.addUnaryOp(u->uKind, inner);
+    }
+
+    if (auto b = getBinaryOp(input, id)) {
+        NodeID left = eliminateNegate(input, b->left, output);
+        NodeID right = eliminateNegate(input, b->right, output);
+        return output.addBinaryOp(b->bKind, left, right);
+    }
+
+    if (auto c = getCall(input, id)) {
+        std::vector<NodeID> args;
+        args.reserve(c->args.size());
+        for (const NodeID& arg : c->args) {
+            args.emplace_back(eliminateNegate(input, arg, output));
+        }
+        return output.addCall(c->fKind, args);
+    }
+
+    return cloneSubtree(input, id, output);
 }
 
 NodeID foldConstants(const AST& input, const NodeID& id, AST& output) {
@@ -60,11 +91,6 @@ NodeID foldConstants(const AST& input, const NodeID& id, AST& output) {
 
     if (auto u = getUnaryOp(input, id)) {
         NodeID inner = foldConstants(input, u->inner, output);
-
-        if (u->uKind == UnaryOpKind::Negate && isRational(output, inner)) {
-            auto r = *getRational(output, inner);
-            return output.addRational(-r.numerator, r.denominator);
-        }
 
         if (u->uKind == UnaryOpKind::Factorial && isRational(output, inner)) {
             auto r = *getRational(output, inner);
@@ -176,11 +202,6 @@ NodeID eliminateSubtraction(const AST& input, const NodeID& id, AST& output) {
 
     if (auto u = getUnaryOp(input, id)) {
         NodeID inner = eliminateSubtraction(input, u->inner, output);
-
-        if (u->uKind == UnaryOpKind::Negate) {
-            // unary negation -> (-1 * inner)
-            return makeNeg(output, inner);
-        }
         return output.addUnaryOp(u->uKind, inner);
     }
 
@@ -672,24 +693,6 @@ NodeID normalizeSign(const AST& input, const NodeID& id, AST& output) {
     }
 
     if (auto u = getUnaryOp(input, id)) {
-        if (u->uKind == UnaryOpKind::Negate) {
-            NodeID inner = normalizeSign(input, u->inner, output);
-
-            // -(-(x)) -> x
-            if (auto innerU = getUnaryOp(output, inner)) {
-                if (innerU->uKind == UnaryOpKind::Negate) {
-                    return innerU->inner;
-                }
-            }
-
-            // -(rational) -> fold the sign into the rational
-            if (auto r = getRational(output, inner)) {
-                return output.addRational(-r->numerator, r->denominator);
-            }
-
-            return output.addUnaryOp(u->uKind, inner);
-        }
-
         NodeID inner = normalizeSign(input, u->inner, output);
         return output.addUnaryOp(u->uKind, inner);
     }

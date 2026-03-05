@@ -198,7 +198,10 @@ inline NodeID makeSqrt(AST& ast, const NodeID& inner) {
 }
 
 inline NodeID makeNeg(AST& ast, const NodeID& inner) {
-    return ast.addUnaryOp(UnaryOpKind::Negate, inner);
+    if (auto r = getRational(ast, inner)) {
+        return ast.addRational(-r->numerator, r->denominator);
+    }
+    return ast.addBinaryOp(BinaryOpKind::Multiply, ast.addRational(-1, 1), inner);
 }
 
 inline NodeID makeReciprocal(AST& ast, const NodeID& inner) {
@@ -314,20 +317,6 @@ inline std::optional<CoefficientPair> extractCoefficient(const AST& ast, const N
                 };
             }
             return CoefficientPair{{r.denominator, r.numerator}, b->left};
-        }
-    }
-
-    // pull out -1
-    if (auto u = getUnaryOp(ast, id)) {
-        if (u->uKind == UnaryOpKind::Negate) {
-            auto inner = extractCoefficient(ast, u->inner);
-            if (inner) {
-                return CoefficientPair{
-                    {-inner->coefficient.numerator, inner->coefficient.denominator},
-                    inner->remainder
-                };
-            }
-            return CoefficientPair{{-1, 1}, u->inner};
         }
     }
 
