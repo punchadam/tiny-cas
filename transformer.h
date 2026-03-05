@@ -82,6 +82,9 @@ NodeID combineLikeTerms(const AST& input, const NodeID& id, AST& output);
 // convert "-(-x)" into "x"
 NodeID normalizeSign(const AST& input, const NodeID& id, AST& output);
 
+// order terms canonically
+NodeID canonicalOrder(const AST& input, const NodeID& id, AST& output);
+
 // returns exact rational if possible
 std::optional<NodeID> tryFoldPower(const RationalNode& base, const RationalNode& exp, AST& output);
 // returns exact nth root of val if possible
