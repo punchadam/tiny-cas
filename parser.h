@@ -99,6 +99,7 @@ class Parser {
         NodeID parseFraction();             // \frac{n}{d}
         //NodeID parseFunctionArg();          // \sin{x}, \sin x, or \sin(x + 1)
         NodeID parseSingleArgFunction();    // sin(), ln()
+        NodeID parseMultiArgFunction();     // max(), min(), atan2(), etc.
         NodeID parseOperatorName();         // \operatorname{name}(args...)
         std::vector<NodeID> parseArgList(); // \max{arg1, arg2, arg3, etc}
         
@@ -153,6 +154,15 @@ inline const std::unordered_map<std::string, FunctionKind> OPERATOR_NAME_MAP = {
     { "abs",    FunctionKind::AbsoluteValue }
 };
 
+// maps commands to FunctionKind for multi-arg functions (e.g. \max, \min)
+inline const std::unordered_map<std::string, FunctionKind> MULTI_ARG_FUNCTION_KIND_MAP = {
+    { "max",    FunctionKind::Max },
+    { "min",    FunctionKind::Min },
+    { "atan2",  FunctionKind::Atan2 },
+    { "hypot",  FunctionKind::Hypotenuse },
+    { "abs",    FunctionKind::AbsoluteValue }
+};
+
 // maps commands to ConstantKind
 inline const std::unordered_map<std::string, ConstantKind> CONSTANT_MAP = {
     { "pi",     ConstantKind::PI },
@@ -167,6 +177,7 @@ inline const std::unordered_set<std::string> PREFIX_COMMANDS = {
     "sqrt", "frac",
     "left", "operatorname",
     "arcsin", "arccos", "arctan",
+    "max", "min", "atan2", "hypot", "abs",
 };
 
 #endif

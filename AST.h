@@ -269,7 +269,11 @@ class AST {
             
             std::visit([&](auto& node) {
                 using T = std::decay_t<decltype(node)>;
-                result += indent + node.toString() + "\n";
+                if constexpr (std::is_same_v<T, RationalNode>) {
+                    if (node.denominator == 1) result += indent + std::to_string(node.numerator) + "\n";
+                    else result += indent + node.toString() + "\n";
+                } else result += indent + node.toString() + "\n";
+
                 if constexpr (std::is_same_v<T, BinaryOpNode>) {
                     result += toString(node.left, depth + 1);
                     result += toString(node.right, depth + 1);

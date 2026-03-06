@@ -135,6 +135,11 @@ NodeID Parser::parseNumber() {
     if (t.isInt()) {
         return _ast->addRational(std::get<i64>(t.number->value), 1, t.pos);
     }
+    double val = std::get<double>(t.number->value);
+    i64 num, den;
+    if (doubleToRational(val, num, den)) {
+        return _ast->addRational(num, den, t.pos);
+    }
     return _ast->addReal(std::get<double>(t.number->value), t.pos);
 }
 
@@ -149,6 +154,10 @@ NodeID Parser::parseCommand() {
 
     if (auto it = FUNCTION_KIND_MAP.find(cmd); it != FUNCTION_KIND_MAP.end()) {
         return parseSingleArgFunction();
+    }
+
+    if (auto it = MULTI_ARG_FUNCTION_KIND_MAP.find(cmd); it != MULTI_ARG_FUNCTION_KIND_MAP.end()) {
+        return parseMultiArgFunction();
     }
 
     if (cmd == "operatorname") {
@@ -273,6 +282,18 @@ NodeID Parser::parseSingleArgFunction() {
     }
 
     return _ast->addCall(fKind, {arg}, p); 
+}
+
+NodeID Parser::parseMultiArgFunction() {
+    const Token& t = advance();
+    FunctionKind fKind = MULTI_ARG_FUNCTION_KIND_MAP.at(t.lexeme);
+    size_t p = t.pos;
+
+    expect(TokenType::LParenthesis);
+    std::vector<NodeID> args = parseArgList();
+    expect(TokenType::RParenthesis);
+
+    return _ast->addCall(fKind, args, p);
 }
 
 NodeID Parser::parseOperatorName() {

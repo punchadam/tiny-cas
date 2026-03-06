@@ -36,7 +36,7 @@ int main(void) {
             if (!t.is(TokenType::End)) std::cout << ",";
             std::cout << " ";
         }
-        std::cout << "]\n\n";
+        std::cout << "]\n";
 
         try {
             p.parse(tokens, ast);
@@ -48,7 +48,7 @@ int main(void) {
             continue;
         }
 
-        std::cout << "Parsed AST:\n" << ast.toString() << "\n\n";
+        std::cout << "Parsed AST:\n" << ast.toString() << "\n";
 
         AST transformed;
         try {
@@ -61,7 +61,7 @@ int main(void) {
             continue;
         }
 
-        std::cout << "Transformed AST:\n" << transformed.toString() << "\n\n";
+        std::cout << "Transformed AST:\n" << transformed.toString() << "\n";
     }
 
     return 0;

@@ -22,7 +22,6 @@ static constexpr size_t UnknownPos = (size_t)-1;
 struct Number {
     std::variant<double, i64> value;
     bool isInt = false;
-    //bool isInt() { return std::holds_alternative<i64>(value); }
 };
 
 // the supported latex commands that follow a '\'
@@ -43,7 +42,9 @@ enum class SupportedCommands {
     sum, prod,
     integrate, lim,
 
-    operatorname    // custom ops like max, etc
+    max, min,
+
+    operatorname    // custom ops
 };
 
 // stern brocot search for a fraction approx of a double
@@ -54,8 +55,8 @@ inline bool doubleToRational(const double& input, i64& outNumerator, i64& outDen
     bool canRationalize = false;
     bool isNegative = false;
 
-    const double maxError = 1e-12;
-    const u16 maxDenominator = 1000;
+    const double maxError = 1e-10;
+    const u32 maxDenominator = 100000;
 
     if (value < 0) {
         isNegative = true;

@@ -20,7 +20,10 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
     size_t startPos = 0;   // start of token in original string
 
     auto commit = [&](TokenType type, std::string lexeme, size_t pos, std::optional<Number> number = std::nullopt) {
-        if (number.has_value()) { tokens.push_back(Token{ type, std::move(lexeme), pos, number }); }
+        if (number.has_value()) { 
+            std::cout << "variant index: " << number->value.index() << std::endl;
+            tokens.push_back(Token{ type, std::move(lexeme), pos, number });
+        }
         else { tokens.push_back(Token{ type, std::move(lexeme), pos }); }
     };
 
@@ -78,7 +81,10 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
 
                 if (c == 'e' || c == 'E') { buffer += static_cast<char>(c); s = State::NumberExpMark; break; }
                 
-                Number num{ std::stoi(buffer), true };  // state stayed within number, commit an int
+                
+                Number num;
+                num.value = std::stoi(buffer);
+                num.isInt = true;
                 commit(TokenType::Number, buffer, startPos, num);
                 s = State::Start;
                 --i;
@@ -93,8 +99,11 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
             case State::NumberFrac: {
                 if (isdigit(c)) { buffer += static_cast<char>(c); break; }
                 
-                Number num{ static_cast<i64>(std::stoll(buffer)), true };
-                commit(TokenType::Number, buffer, i, num);
+                //Number num{ std::stoll(buffer), false };
+                Number num;
+                num.value = std::stod(buffer);
+                num.isInt = false;
+                commit(TokenType::Number, buffer, startPos, num);
                 s = State::Start;
                 --i;
                 break;
@@ -116,7 +125,7 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
                 if (isdigit(c)) { buffer += static_cast<char>(c); break; }
                 
                 Number num{ std::stod(buffer), false };
-                commit(TokenType::Number, buffer, i, num);
+                commit(TokenType::Number, buffer, startPos, num);
                 s = State::Start;
                 --i;
                 break;
