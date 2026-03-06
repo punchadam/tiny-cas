@@ -322,6 +322,13 @@ NodeID simplifyIdentities(const AST& input, const NodeID & id, AST& output) {
             }
             */
             case BinaryOpKind::Power: {
+                // flatten nested powers
+                if (auto innerPow = getBinaryOp(output, left)) {
+                    if (innerPow->bKind == BinaryOpKind::Power) {
+                        NodeID newExp = makeProduct(output, innerPow->right, right);
+                        return output.addBinaryOp(BinaryOpKind::Power, innerPow->left, newExp);
+                    }
+                }
                 if (isZero(output, right)) return output.addRational(1, 1);
                 if (isOne(output, right)) return left;
                 if (isZero(output, left) && isPositive(output, right)) return output.addRational(0, 1);
@@ -360,7 +367,7 @@ NodeID combineLikeTerms(const AST& input, const NodeID& id, AST& output) {
         NodeID left  = combineLikeTerms(input, b->left, output);
         NodeID right = combineLikeTerms(input, b->right, output);
 
-        // only flatten Add chains at this level
+        // only flatten Add ops
         if (b->bKind != BinaryOpKind::Add) {
             return output.addBinaryOp(b->bKind, left, right);
         }
@@ -387,12 +394,12 @@ NodeID combineLikeTerms(const AST& input, const NodeID& id, AST& output) {
                 // can't extract coefficient, treat as 1 * term
                 // check if any existing group matches this whole term
                 bool merged = false;
-                for (auto& g : groups) {
-                    if (g.remainder.isNone()) continue;
-                    if (structurallyEqual(temp, g.remainder, term)) {
+                for (auto& group : groups) {
+                    if (group.remainder.isNone()) continue;
+                    if (structurallyEqual(temp, group.remainder, term)) {
                         // add 1 to this group
-                        g.num = g.num * 1 + 1 * g.den; // (g.num/g.den) + 1/1
-                        // g.den stays the same
+                        group.num += group.den; // (group.num/group.den) + 1/1
+                        // group.den stays the same
                         merged = true;
                         break;
                     }
@@ -483,8 +490,8 @@ NodeID collectExponents(const AST& input, const NodeID& id, AST& output) {
 
     // recurse into binary ops
     if (auto b = getBinaryOp(input, id)) {
-        NodeID left  = combineLikeTerms(input, b->left, output);
-        NodeID right = combineLikeTerms(input, b->right, output);
+        NodeID left  = collectExponents(input, b->left, output);
+        NodeID right = collectExponents(input, b->right, output);
 
         if (b->bKind != BinaryOpKind::Multiply) {
             return output.addBinaryOp(b->bKind, left, right);
@@ -531,6 +538,7 @@ NodeID collectExponents(const AST& input, const NodeID& id, AST& output) {
             }
 
             bool merged = false;
+            // merge groups with the same base as the exponent
             for (auto& group : groups) {
                 if (structurallyEqual(temp, group.base, exponent->base)) {
                     group.num = group.num * exponent->exponent.denominator + exponent->exponent.numerator * group.den;
@@ -575,6 +583,11 @@ NodeID collectExponents(const AST& input, const NodeID& id, AST& output) {
             result = makeProduct(output, rebuilt[i], result);
         }
         return result;
+    }
+
+    if (auto u = getUnaryOp(input, id)) {
+        NodeID inner = collectExponents(input, u->inner, output);
+        return output.addUnaryOp(u->uKind, inner);
     }
     
     if (auto c = getCall(input, id)) {
