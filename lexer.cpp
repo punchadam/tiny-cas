@@ -20,10 +20,7 @@ void Tokenize(const std::string& input, std::vector<Token>& tokens) {
     size_t startPos = 0;   // start of token in original string
 
     auto commit = [&](TokenType type, std::string lexeme, size_t pos, std::optional<Number> number = std::nullopt) {
-        if (number.has_value()) { 
-            std::cout << "variant index: " << number->value.index() << std::endl;
-            tokens.push_back(Token{ type, std::move(lexeme), pos, number });
-        }
+        if (number.has_value()) tokens.push_back(Token{ type, std::move(lexeme), pos, number });
         else { tokens.push_back(Token{ type, std::move(lexeme), pos }); }
     };
 
