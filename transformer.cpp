@@ -1,7 +1,5 @@
 #include "transformer.h"
 #include <cmath>
-#include <cassert>
-#include <iostream>
 
 NodeID transform(const AST& input, AST& output) {
     AST current;
@@ -388,7 +386,6 @@ NodeID combineLikeTerms(const AST& input, const NodeID& id, AST& output) {
         std::vector<Group> groups;
 
         for (const NodeID& term : terms) {
-            assert(term.i < temp.arena.size() && "term not in temp!");
             auto coeff = extractCoefficient(temp, term);
             if (!coeff) {
                 // can't extract coefficient, treat as 1 * term

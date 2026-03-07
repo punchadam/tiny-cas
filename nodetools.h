@@ -5,6 +5,7 @@
 #include "Error.h"
 #include <set>
 #include <algorithm>
+#include <map>
 
 #pragma region IS_TYPE_METHODS
 inline bool isConstant(const AST& ast, const NodeID& id) {
@@ -377,6 +378,7 @@ inline std::optional<ExponentPair> extractExponent(const AST& ast, const NodeID&
 
 #pragma endregion COEFFICIENT_EXTRACTION
 
+#pragma region STRUCTURE
 // compares 2 subtrees for structural identity, for like-term grouping
 inline bool structurallyEqual(const AST& a, const NodeID& idA, const AST& b, const NodeID& idB) {
     if (idA.isNone() && idB.isNone()) return true;
@@ -467,6 +469,7 @@ inline std::vector<NodeID> flattenProduct(const AST& ast, const NodeID& id) {
     flattenProduct(ast, id, factors);
     return factors;
 }
+#pragma endregion STRUCTURE
 
 #pragma region ORDERING
 // rank for top-level node type, used for canonical ordering
@@ -543,4 +546,91 @@ inline bool nodeLessThan(const AST& ast, const NodeID& a, const NodeID& b) {
 
 #pragma endregion ORDERING
 
+#pragma region POLYNOMIALS
+// returns the polynomial degree in varName, returns nullopt if transcendental
+// assumes input has been fully transformed
+inline std::optional<i64> polynomialDegree(const AST& ast, const NodeID& id, const std::string& varName) {
+    if (id.isNone()) return std::nullopt;
+    if (isLeafNode(ast, id)) {
+        if (auto name = getIdentifierName(ast, id)) return (*name == varName) ? 1 : 0;
+        return 0;
+    }
+
+    if (auto b = getBinaryOp(ast, id)) {
+        auto degreeL = polynomialDegree(ast, id, varName);
+        auto degreeR = polynomialDegree(ast, id, varName);
+
+        switch (b->bKind) {
+            case BinaryOpKind::Add: {
+                if (!degreeL || !degreeR) return std::nullopt;
+                return std::max(*degreeL, *degreeR);
+            }
+            case BinaryOpKind::Multiply: {
+                if (!degreeL || !degreeR) return std::nullopt;
+                return *degreeL + *degreeR;
+            }
+            case BinaryOpKind::Power: {
+                if (!containsIdentifier(ast, b->left, varName)) return 0;
+                if (containsIdentifier(ast, b->right, varName)) return std::nullopt;
+
+                auto exp = getRational(ast, b->right);
+                if (!exp || exp->denominator != 1 || exp->numerator < 0) return std::nullopt;
+
+                if (!degreeL) return std::nullopt;
+                return *degreeL * exp->numerator;
+            }
+            default: return std::nullopt;
+        }
+    }
+
+    if (auto u = getUnaryOp(ast, id)) {
+        if (containsIdentifier(ast, u->inner, varName)) return std::nullopt;
+        return 0;
+    }
+
+    return std::nullopt;
+}
+
+// maps from integer degree to coefficient NodeID for an expression polynomial in varName
+// coefficients are subtrees in ast and may contain other identifiers
+std::optional<std::map<i64, NodeID>> collectPolynomialTerms(const AST& ast, const NodeID& id, const std::string& varName);  
+
+// substitutes all occurrences of varname with valueID in a new ast
+NodeID substituteIdentifier(const AST& input, const NodeID& id, const std::string& varName, const NodeID& valueID, AST& out) {
+    if (id.isNone()) return NodeID::None();
+    
+    if (!containsIdentifier(input, id, varName)) return cloneSubtree(input, id, out);
+
+    if (auto name = getIdentifierName(input, id)) {
+        if (*name == varName) return cloneSubtree(input, valueID, out);
+        return out.addIdentifier(*name);
+    }
+
+    if (isLeafNode(input, id)) return cloneSubtree(input, id, out);
+
+    if (auto b = getBinaryOp(input, id)) {
+        NodeID left = substituteIdentifier(input, b->left, varName, valueID, out);
+        NodeID right = substituteIdentifier(input, b->right, varName, valueID, out);
+
+        return out.addBinaryOp(b->bKind, left, right);
+    }
+
+    if (auto u = getUnaryOp(input, id)) {
+        NodeID inner = substituteIdentifier(input, u->inner, varName, valueID, out);
+
+        return out.addUnaryOp(u->uKind, inner);
+    }
+
+    if (auto c = getCall(input, id)) {
+        std::vector<NodeID> args;
+        args.reserve(c->args.size());
+        for (const NodeID& arg : args) {
+            args.emplace_back(substituteIdentifier(input, arg, varName, valueID, out));
+        }
+        return out.addCall(c->fKind, args);
+    }
+
+    return cloneSubtree(input, id, out);
+}
+#pragma endregion POLYNOMIALS
 #endif
