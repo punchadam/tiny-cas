@@ -11,7 +11,7 @@
 //          B   C
 
 // a post order traversal of this tree would look like: A -> B -> C -> * -> +
-// which is RPN "ABC*+" which is equivalent to the original expression
+// which is "ABC*+", and is equivalent to the original expression assuming reverse polish notation
 
 #pragma once
 
@@ -19,11 +19,35 @@
 
 #include <memory>
 
+class AST {
+private:
+    std::unique_ptr<ASTnode> root;
+
+public:
+    explicit AST(std::unique_ptr<ASTnode> rootNode) : root(std::move(rootNode)) {}
+
+    std::string toString() const {
+        if (!root) return "";
+        return root->toString();
+    }
+};
+
 class ASTnode {
 public:
     virtual ~ASTnode() = default;
 
-    virtual std::string& toString() const = 0;
+    virtual std::string toString() const = 0;
+};
+
+class VariableNode : public ASTnode {
+private:
+    std::string name;
+
+public:
+    explicit VariableNode(std::string variableName) : name(std::move(variableName)) {}
+    std::string toString() const override {
+        return name;
+    }
 };
 
 class RealNode : public ASTnode {
@@ -32,7 +56,7 @@ private:
 public:
     explicit RealNode(double val) : value(val) {}
 
-    std::string& toString() const override {
+    std::string toString() const override {
         return std::to_string(value);
     }
 };
@@ -44,7 +68,7 @@ private:
 public:
     explicit RationalNode(i64 n, i64 d) : num(n), den(d) {}
 
-    std::string& toString() const override {
+    std::string toString() const override {
         return std::to_string(num) + "/" + std::to_string(den);
     }
 };
@@ -67,7 +91,7 @@ public:
     BinaryOpNode(BinaryOpType operation, std::unique_ptr<ASTnode> l, std::unique_ptr<ASTnode> r)
         : op(operation), left(std::move(l)), right(std::move(r)) {}
 
-    std::string& toString() const override {
+    std::string toString() const override {
         std::string str_op;
         switch (op) {
             case BinaryOpType::ADD:
@@ -105,7 +129,7 @@ public:
     UnaryOpNode(UnaryOpType operation, std::unique_ptr<ASTnode> in)
         : op(operation), inner(std::move(in)) {}
 
-    std::string& toString() const override {
+    std::string toString() const override {
         if (op == UnaryOpType::NEGATE) {
             return "-" + inner->toString();
         } else if (op == UnaryOpType::FACTORIAL) {
@@ -117,6 +141,8 @@ public:
 enum class FunctionType {
     SIN, COS, TAN, CSC, SEC, COT,
     ARCSIN, ARCCOS, ARCTAN, ARCCSC, ARCSEC, ARCCOT,
+    SINH, COSH, TANH, CSCH, SECH, COTH,
+    ARCSINH, ARCCOSH, ARCTANH, ARCCSCH, ARCSECH, ARCCOTH,
     LOG, LN, EXP,
     SQRT,
     ABS,
@@ -135,7 +161,7 @@ public:
     FunctionNode(FunctionType f, std::vector<std::unique_ptr<ASTnode>> a)
         : function(f), args(std::move(a)) {}
 
-    std::string& toString() {
+    std::string toString() const override {
         std::string str_f;
         switch (function) {
             case FunctionType::SIN:
@@ -173,6 +199,42 @@ public:
                 break;
             case FunctionType::ARCCOT:
                 str_f = "arccot";
+                break;
+            case FunctionType::SINH:
+                str_f = "sinh";
+                break;
+            case FunctionType::COSH:
+                str_f = "cosh";
+                break;
+            case FunctionType::TANH:
+                str_f = "tanh";
+                break;
+            case FunctionType::CSCH:
+                str_f = "csch";
+                break;
+            case FunctionType::SECH:
+                str_f = "sech";
+                break;
+            case FunctionType::COTH:
+                str_f = "coth";
+                break;
+            case FunctionType::ARCSINH:
+                str_f = "arcsinh";
+                break;
+            case FunctionType::ARCCOSH:
+                str_f = "arccosh";
+                break;
+            case FunctionType::ARCTANH:
+                str_f = "arctanh";
+                break;
+            case FunctionType::ARCCSCH:
+                str_f = "arccsch";
+                break;
+            case FunctionType::ARCSECH:
+                str_f = "arcsech";
+                break;
+            case FunctionType::ARCCOTH:
+                str_f = "arccoth";
                 break;
             case FunctionType::LOG:
                 str_f = "log";
