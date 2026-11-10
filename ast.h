@@ -16,6 +16,7 @@
 #pragma once
 
 #include "lexer.h"
+#include "number.h"
 
 #include <memory>
 
@@ -50,26 +51,14 @@ public:
     }
 };
 
-class RealNode : public ASTnode {
+class NumberNode : public ASTnode {
 private:
-    double value;
+    Number num;
 public:
-    explicit RealNode(double val) : value(val) {}
+    explicit NumberNode(Number n) : num(n) {}
 
     std::string toString() const override {
-        return std::to_string(value);
-    }
-};
-
-class RationalNode : public ASTnode {
-private:
-    i64 num;
-    i64 den;
-public:
-    explicit RationalNode(i64 n, i64 d) : num(n), den(d) {}
-
-    std::string toString() const override {
-        return std::to_string(num) + "/" + std::to_string(den);
+        return num.toString();
     }
 };
 
