@@ -1,3 +1,20 @@
+// A lexer turns a raw string which means basically nothing to
+// the CAS into a slightly-more-meaningful vector of tokens.
+
+// A Token, in this context, is a simple object that has a type and a value.
+// These properties are used by the parser in the next phase of the pipeline,
+// but it is the job of the lexer to find both the type and value of a
+// prospective token, and then remove its lexeme from the string.
+
+// Tokens and lexers are stupid by design, and should not have any knowledge
+// or say in how the parser or AST works. This is a concept I overlooked in
+// previous attempts at this project, which resulted in dependency fuckery.
+
+// This lexer is a "state machine" or finite automata, which will process the
+// input character-by-character, moving from one "state" to another based on the
+// characters it reads until a valid token is completed, at which point it moves
+// into the START state again and begins the next token.
+
 #pragma once
 
 #include <vector>

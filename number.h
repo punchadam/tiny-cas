@@ -1,3 +1,14 @@
+// In a CAS, it is important to be able to handle different kinds
+// of numbers, sometimes even all at once. As such, it cleans up
+// the code quite a bit to create a variant "Number" class, which
+// overloads common operators and retains precision wherever possible.
+
+// For example, dividing a rational by an integer should not result in
+// a cast to a lesser-precision data type like double, and instead should\
+// stay as either a rational or an integer.
+
+// In this implementation, rationals also automatically simplify upon creation.
+
 #pragma once
 
 #include <stdint.h>
