@@ -3,16 +3,6 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
-#include <stdint.h>
-
-using i64 = int64_t;
-using i32 = int32_t;
-using i16 = int16_t;
-using i8 = int8_t;
-using u64 = uint64_t;
-using u32 = uint32_t;
-using u16 = uint16_t;
-using u8 = uint8_t;
 
 bool isNumber(const char c) {
     unsigned char usc = static_cast<unsigned char>(c);
@@ -65,27 +55,25 @@ inline void Lex(const std::string& expression, std::vector<Token>& tokens) {
                     break;
                 } if (c == '.') {
                     currentState = LexerStates::READING_DECIMAL;
+                    lexeme.push_back(c);
+                    i++;
+                    break;
                 } if (isLetter(c)) {
                     currentState = LexerStates::READING_TEXT;
                     break;
                 } if (c == '+' || c == '-' || c == '*' || c == '/' || c == '^') {
-                    Token newToken(TokenType::OPERATOR, std::string(1, c));
-                    tokens.push_back(newToken);
+                    tokens.emplace_back(TokenType::OPERATOR, std::string(1, c));
                     i++;
                     break;
                 } if (c == '(') {
-                    Token newToken(TokenType::LPAREN, "(");
-                    tokens.push_back(newToken);
+                    tokens.emplace_back(TokenType::LPAREN, "(");
                     i++;
                     break;
-                }
-                if (c == ')') {
-                    Token newToken(TokenType::RPAREN, ")");
-                    tokens.push_back(newToken);
+                } if (c == ')') {
+                    tokens.emplace_back(TokenType::RPAREN, ")");
                     i++;
                     break;
-                }
-                if (c == ' ') {
+                } if (c == ' ' || c == '\t' || c == '\n' || c == '\r') {
                     i++;
                     break;
                 } else {
@@ -98,22 +86,24 @@ inline void Lex(const std::string& expression, std::vector<Token>& tokens) {
                 }
                 break;
             case LexerStates::READING_NUMBER:
-                lexeme.push_back(c);
-                i++;
-                if (!isNumber(expression[i])) {
-                    if (expression[i] == '.') {
-                        currentState = LexerStates::READING_DECIMAL;
-                        break;
-                    }
+                if (i < expression.size() && isNumber(expression[i])) {
+                    lexeme.push_back(expression[i]);
+                    i++;
+                } else if (i < expression.size() && expression[i] == '.') {
+                    lexeme.push_back(expression[i]);
+                    i++;
+                    currentState = LexerStates::READING_FRAC;
+                } else {
+                    tokens.emplace_back(TokenType::NUMBER, lexeme);
                     currentState = LexerStates::START;
-                    Token newToken(TokenType::NUMBER, lexeme);
-                    tokens.push_back(newToken);
                 }
                 break;
             case LexerStates::READING_DECIMAL:
-                lexeme.push_back(c);
-                i++;
-                if (!isNumber(expression[i])) {
+                if (i < expression.size() && isNumber(expression[i])) {
+                    lexeme.push_back(expression[i]);
+                    i++;
+                    currentState = LexerStates::READING_FRAC;
+                } else {
                     std::string msg = "Decimal must be followed by number, instead got \'";
                     msg += c;
                     msg += "\' at position: ";
@@ -121,48 +111,45 @@ inline void Lex(const std::string& expression, std::vector<Token>& tokens) {
                     msg += "\n";
                     throw std::invalid_argument(msg);
                 }
-                currentState = LexerStates::READING_FRAC;
                 break;
             case LexerStates::READING_FRAC:
-                lexeme.push_back(c);
-                i++;
-                if (expression[i] == '.') {
+                if (i < expression.size() && expression[i] == '.') {
                     std::string msg = "More than one decimal in one number, at position: ";
                     msg += std::to_string(i);
                     msg += "\n";
                     throw std::invalid_argument(msg);
-                }
-                if (!isNumber(expression[i])) {
+                } if (i < expression.size() && isNumber(expression[i])) {
+                    lexeme.push_back(expression[i]);
+                    i++;
+                } else {
+                    tokens.emplace_back(TokenType::NUMBER, lexeme);
                     currentState = LexerStates::START;
-                    Token newToken(TokenType::NUMBER, lexeme);
-                    tokens.push_back(newToken);
                 }
                 break;
             case LexerStates::READING_TEXT:
-                lexeme.push_back(c);
-                i++;
-                if (expression[i] == '(') {
-                    currentState = LexerStates::START;
-                    Token newText(TokenType::IDENTIFIER, lexeme);
-                    tokens.push_back(newText);
-                    Token newToken(TokenType::LPAREN, "(");
-                    tokens.push_back(newToken);
+                if (i < expression.size() && isLetter(expression[i])) {
+                    lexeme.push_back(expression[i]);
                     i++;
-                    break;
-                }
-                if (!isLetter(expression[i])) {
-                    currentState = LexerStates::START;
+                } else {
                     if (lexeme == "e" || lexeme == "pi") {
-                        Token newToken(TokenType::CONSTANT, lexeme);
-                        tokens.push_back(newToken);
-                        break;
+                        tokens.emplace_back(TokenType::CONSTANT, lexeme);
                     } else {
-                        Token newToken(TokenType::IDENTIFIER, lexeme);
-                        tokens.push_back(newToken);
-                        break;
+                        tokens.emplace_back(TokenType::IDENTIFIER, lexeme);
                     }
+                    currentState = LexerStates::START;
                 }
-            // all cases done, repeat switch statement
+                break;
+        }
+    }
+
+    // remaining tokens left in buffer
+    if (currentState == LexerStates::READING_NUMBER || currentState == LexerStates::READING_FRAC) {
+        tokens.emplace_back(TokenType::NUMBER, lexeme);
+    } else if (currentState == LexerStates::READING_TEXT) {
+        if (lexeme == "e" || lexeme == "pi") {
+            tokens.emplace_back(TokenType::CONSTANT, lexeme);
+        } else {
+            tokens.emplace_back(TokenType::IDENTIFIER, lexeme);
         }
     }
 }
